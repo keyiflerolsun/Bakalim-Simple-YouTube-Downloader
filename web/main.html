@@ -8,7 +8,7 @@
     <title>YouTube Downloader</title>
   </head>
 
-  <body onload="setInterval(update_thumbnail, 1);eel.update_status_output();eel.update_version_badge()">
+  <body onload="setInterval(kucuk_resim_guncelle, 1);eel.guncelle_durum_ciktisi();eel.guncelle_version_rozeti()">
 
     <!-- HEAD -->
     <nav class="navbar navbar-dark bg-dark">
@@ -26,7 +26,7 @@
             <div class="input-group-prepend">
               <span class="input-group-text" id="basic-addon1">🌐</span>
             </div>
-            <input onchange="reset_progressbar()" type="text" class="form-control" id="url-field" placeholder="https://www.youtube.com/watch?v=VIDEO_ID" required>
+            <input onchange="sifirla_progress()" type="text" class="form-control" id="url-field" placeholder="https://www.youtube.com/watch?v=VIDEO_ID" required>
           </div>
         </div>
       </div>
@@ -41,10 +41,10 @@
         <div class="col"></div> <!-- empty column -->
         <div class="col"></div> <!-- empty column -->
         <div class="col">
-          <button type="button" class="btn btn-outline-primary" onclick="open_dir_browser()">Şuraya kaydet</button>
+          <button type="button" class="btn btn-outline-primary" onclick="dizin_tarayicisi_ac()">Şuraya kaydet</button>
         </div>
         <div class="col">
-          <button type="button" class="btn btn-primary" name="button" onclick="start_download()">İndir</button>
+          <button type="button" class="btn btn-primary" name="button" onclick="indirmeye_basla()">İndir</button>
         </div>
         <div class="col"></div><!-- empty column -->
         <div class="col"></div> <!-- empty column -->

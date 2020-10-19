@@ -1,26 +1,26 @@
 // starts pythons download function with url parameter
-function start_download(){
+function indirmeye_basla(){
   let url = document.getElementById('url-field').value;
   //console.log("downloading video: " + url);
-  eel.download(url);
+  eel.indir(url);
 }
 
 // opens directory selection window
-async function open_dir_browser() {
-  var download_path = await eel.open_dir_browser()();
+async function dizin_tarayicisi_ac() {
+  var download_path = await eel.dizin_tarayicisi_ac()();
 }
 
 // get video_id from url (thanks https://stackoverflow.com/questions/3452546/how-do-i-get-the-youtube-video-id-from-a-url)
-function youtube_url_parser(url){
-    var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-    var match = url.match(regExp);
+function youtube_url_ayikla(url){
+    var regExp  = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    var match   = url.match(regExp);
     return (match&&match[7].length==11)? match[7] : false;
 }
 
 // changes thumbnail (runs every second (not the best solution i know))
-function update_thumbnail() {
-  let url = document.getElementById('url-field').value;
-  let video_id = youtube_url_parser(url);
+function kucuk_resim_guncelle() {
+  let url         = document.getElementById('url-field').value;
+  let video_id    = youtube_url_ayikla(url);
   let picture_url = 'img/noinput.svg';
   if(video_id !== false) {
     picture_url = 'https://img.youtube.com/vi/' + video_id + '/0.jpg';
@@ -29,34 +29,34 @@ function update_thumbnail() {
 }
 
 // update progress bar via python backend
-eel.expose(update_progressbar);
-function update_progressbar(percentage) {
+eel.expose(guncelle_progress);
+function guncelle_progress(percentage) {
   let pb = document.getElementById('progress_bar0');
   pb.style.width = percentage.toString() + "%";
   pb.innerHTML = percentage.toString() + "%";
 }
 
 // reset progress bar
-function reset_progressbar() {
+function sifirla_progress() {
   let pb = document.getElementById('progress_bar0');
   pb.style.width = "0%"
   pb.innerHTML = "";
 }
 
 // update status field
-eel.expose(update_status);
-function update_status(msg) {
-  document.getElementById('status-field').value = "[Status] " + msg;
+eel.expose(guncelle_durum);
+function guncelle_durum(msg) {
+  document.getElementById('status-field').value = "[Durum] " + msg;
 }
 
 // update version text of the version badge
-eel.expose(update_version_badge)
-function update_version_badge(version) {
+eel.expose(guncelle_version_rozeti)
+function guncelle_version_rozeti(version) {
   document.getElementById('version-badge').innerHTML = version;
 }
 
 // shows the update available badge
-eel.expose(show_update_available)
-function show_update_available() {
+eel.expose(mevcut_guncellemeyi_goster)
+function mevcut_guncellemeyi_goster() {
   document.getElementById('update-available').style="visibility: visible";
 }

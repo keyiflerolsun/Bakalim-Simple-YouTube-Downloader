@@ -11,6 +11,7 @@ import sys
 import datetime
 import configparser
 import youtube_dl as yt
+from youtube_dl.utils import DownloadError, ExtractorError
 # import json
 # import urllib.request
 # from pathlib import Path
@@ -28,7 +29,7 @@ except ImportError:
     print("sudo pacman -S tk")
 
 # temel logger
-class MyLogger(object):
+class LogYok(object):
     def __init__(self):
         pass
 
@@ -41,30 +42,31 @@ class MyLogger(object):
         pass
 
     def error(self, msg):
-        print(msg)
+        # print(msg)
+        pass
 
 
 # eels kök klasörü ve yapılandırma konumu kurulumu
-web_location    = "web"
-web_path        = os.path.dirname(os.path.realpath(__file__)) + "/" + web_location
-eel.init(web_path)
+web_konumu    = "web"
+web_yolu      = os.path.dirname(os.path.realpath(__file__)) + "/" + web_konumu
+eel.init(web_yolu)
 
 # ayar yolu kurulumu
-config_location = "ayar.ini"
-config_path     = os.path.dirname(os.path.realpath(__file__)) + "/" + config_location
+ayar_konumu   = "ayar.ini"
+ayar_yolu     = os.path.dirname(os.path.realpath(__file__)) + "/" + ayar_konumu
 
 
 # gerçek indirme işlevi
 @eel.expose
-def download(url):
+def indir(url):
     # YouTube_dl özellikleri
     ydl_opts = {
         "verbose": "true",
         "noplaylist": "true",
         "format": "best",
-        "outtmpl": get_save_path() + "/%(title)s.%(ext)s",
-        "progress_hooks": [hook],
-        "logger": MyLogger(),
+        "outtmpl": ver_kayit_yolu() + "/%(title)s.%(ext)s",
+        "progress_hooks": [progress],
+        "logger": LogYok(),
     }
 
     try:
@@ -73,83 +75,84 @@ def download(url):
 
     except KeyboardInterrupt:
         print("KeyboardInterrupt. ❌")
-        eel.update_status("KeyboardInterrupt. ❌")
+        eel.guncelle_durum("KeyboardInterrupt. ❌")
         sys.exit(0)
 
-    except yt.utils.DownloadError:
-        print("Geçerli bir URL değil. ❌")
-        eel.update_status("Geçerli bir URL değil. ❌")
-
+    except (DownloadError, ExtractorError, PermissionError):
+        print("Geçerli bir URL değil veya yazma iznin yok.. ❌")
+        eel.guncelle_durum("Geçerli bir URL değil veya yazma iznin yok.. ❌")
 
 # updates the progress bar as the download goes on
-def hook(d):
+def progress(d):
     try:
-        total_bytes         = int(d["total_bytes"])
-        downloaded_bytes    = int(d["downloaded_bytes"])
-        percentage          = round((downloaded_bytes / total_bytes) * 100)
-        eel.update_progressbar(percentage)
+        toplam_byte = int(d["total_bytes"])
+        inen_byte   = int(d["downloaded_bytes"])
+        yuzde       = round((inen_byte / toplam_byte) * 100)
+        eel.guncelle_progress(yuzde)
 
-        eel.update_status("")
+        eel.guncelle_durum("")
 
         if d["status"] == "downloading":
             try:
-                filename        = os.path.basename(d["filename"])
-                speed           = round(d["speed"] / 1000000, 2)                          # mb/s cinsinden hız
-                elapsed_time    = datetime.timedelta(seconds=round(d["elapsed"]))  # gecen zaman
-                estimated_time  = datetime.timedelta(seconds=d["eta"])           # tahmini süre
+                dosya_adi       = os.path.basename(d["filename"])
+                hiz             = round(d["speed"] / 1000000, 2)                   # mb/s cinsinden hız
+                gecen_zaman     = datetime.timedelta(seconds=round(d["elapsed"]))  # gecen zaman
+                tahmini_sure    = datetime.timedelta(seconds=d["eta"])             # tahmini süre
             except TypeError:
-                speed           = 0  # yedekleme değeri - çünkü yukarıdakiler bazen başarısız olur
-                elapsed_time    = 0
-                estimated_time  = 0
+                hiz            = 0  # yedekleme değeri - çünkü yukarıdakiler bazen başarısız olur
+                gecen_zaman    = 0
+                tahmini_sure   = 0
 
-            eel.update_status("İndiriliyor ...\nHız: {:.2f} mb/s | {} / {}".format(speed, elapsed_time, estimated_time))
+            eel.guncelle_durum("İndiriliyor ...\nHız: {:.2f} mb/s | {} / {}".format(hiz, gecen_zaman, tahmini_sure))
 
         if d["status"] == "finished":
-            eel.update_status("İndirme başarıyla tamamlandı ✔️")
+            eel.guncelle_durum("İndirme başarıyla tamamlandı ✔️")
 
     except KeyError:
         print("Video muhtemelen zaten var. ❌")
-        eel.update_status("Video muhtemelen zaten var. ❌")
+        eel.guncelle_durum("Video muhtemelen zaten var. ❌")
 
 
 # çıktı dizinini seçmek için bir gezgin penceresi açar
 @eel.expose
-def open_dir_browser():
-    root = Tk()
-    root.withdraw()
-    root.wm_attributes("-topmost", 1)
-    folder = filedialog.askdirectory()      # dizin seçiciyi aç
+def dizin_tarayicisi_ac():
+    pencere = Tk()
+    pencere.withdraw()
+    pencere.wm_attributes("-topmost", 1)
+    dizin = filedialog.askdirectory()      # dizin seçiciyi aç
 
-    config = configparser.ConfigParser()    # seçilen dizini yapılandırmaya yaz
-    config.read(config_path)
-    config["MAIN"]["save_path"] = folder
-    with open(config_path, "w") as configfile:
-        config.write(configfile)
-    update_status_output()
+    ayar = configparser.ConfigParser()    # seçilen dizini yapılandırmaya yaz
+    ayar.read(ayar_yolu)
+    ayar["ANA"]["kayit_yolu"] = dizin
+    with open(ayar_yolu, "w") as ayar_dosyasi:
+        ayar.write(ayar_dosyasi)
+    guncelle_durum_ciktisi()
 
 
 # geçerli çıktı yolunu döndür
-def get_save_path():
-    config = configparser.ConfigParser()
-    config.read(config_path)
-    return config["MAIN"]["save_path"]
+def ver_kayit_yolu():
+    ayar = configparser.ConfigParser()
+    ayar.read(ayar_yolu)
+    return ayar["ANA"]["kayit_yolu"]
 
 # durum metin alanındaki çıktı yolunu değiştir
 @eel.expose
-def update_status_output():
-    eel.update_status("Output: " + get_save_path())
+def guncelle_durum_ciktisi():
+    eel.guncelle_durum("Kayıt Yolu: " + ver_kayit_yolu())
 
 # mevcut sürümle sürüm rozetini günceller (html body onload'da çağrılır)
 @eel.expose
-def update_version_badge():
-    eel.update_version_badge("v" + '1.0.3')
+def guncelle_version_rozeti():
+    eel.guncelle_version_rozeti("v" + '1.0.3')
 
 # yapılandırma dosyasının var olup olmadığını kontrol eder. eğer yoksa yaratır
-def check_config():
-    if not os.path.isfile(config_path):
+def kontrol_ayar():
+    calisilan_dizin = os.getcwd()
+    bi_ust_dizin    = os.path.abspath(os.path.join(calisilan_dizin, os.pardir))
+    if not os.path.isfile(ayar_yolu):
         print("ayar.ini eksik, yenisini oluşturuyorum")
-        with open(config_path, "a") as f:
-            f.write("[MAIN]\nsave_path = \n")
+        with open(ayar_yolu, "a") as f:
+            f.write(f"[ANA]\nkayit_yolu = {bi_ust_dizin}\n")
 
 # # check if a new version of sytd is available on pypi
 # def check_for_update():
@@ -164,20 +167,20 @@ def check_config():
 
 #     if LooseVersion(current_version) < LooseVersion(latest_version):
 #         print("Version {} of sytd is available!".format(latest_version))
-#         eel.show_update_available()
+#         eel.mevcut_guncellemeyi_goster()
 
-# close program when closing window
-def close(path, sockets):
+# pencereyi kapatırken programı kapat
+def kapat(path, sockets):
     print("hoşçakal...")
     sys.exit(0)
 
 
-# main function
-def run():
-    check_config()
+# ana işlev
+def basla():
+    kontrol_ayar()
     # check_for_update()
     try:
-        eel.start("main.html", mode="chrome", port=0, size=(600, 840), close_callback=close)
+        eel.start("main.html", mode="chrome", port=0, size=(600, 840), close_callback=kapat)
     except (SystemExit, KeyboardInterrupt):
         pass
     except OSError:
@@ -188,4 +191,4 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    basla()
